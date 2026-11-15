@@ -1,0 +1,8 @@
+{
+  "name": "ObsidIAn 6",
+  "description": "Visor orbital y planificador preliminar de rutas en Marte (Cráter Jezero) en 2D y 3D.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

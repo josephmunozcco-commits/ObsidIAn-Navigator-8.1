@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ObsidIAn Navigator</title>
+    <meta name="description" content="Visor orbital 2D/3D de Marte (Cráter Jezero), planificación de rutas con fuentes NASA online y offline, y simulación de rovers." />
+    <meta property="og:site_name" content="ObsidIAn Navigator" />
+    <meta property="og:title" content="ObsidIAn Navigator" />
+    <meta property="og:description" content="Visor orbital 2D/3D de Marte (Cráter Jezero), planificación de rutas con fuentes NASA online y offline, y simulación de rovers." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./pwa-512x512.png" />
+    <meta property="og:image:alt" content="ObsidIAn Navigator · Visor orbital de Marte" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ObsidIAn Navigator" />
+    <meta name="twitter:description" content="Visor orbital 2D/3D de Marte (Cráter Jezero), planificación de rutas con fuentes NASA online y offline, y simulación de rovers." />
+    <meta name="twitter:image" content="./pwa-512x512.png" />
+    <meta name="theme-color" content="#0b1119" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ObsidIAn Navigator" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./assets/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ObsidIAn Navigator",
+        "alternateName": "ObsidIAn Navigator",
+        "applicationCategory": "ScienceApplication",
+        "operatingSystem": "All",
+        "description": "Visor orbital 2D/3D de Marte (Cráter Jezero), planificación de rutas con fuentes NASA online y offline, y simulación de rovers.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar mission-hud" id="visor">
+        <div class="mission-brand">
+          <img src="assets/logo.png" alt="Logo de ObsidIAn Navigator" width="32" height="32">
+          <div>
+            <h1>ObsidIAn Navigator</h1>
+            <p>Marte · <span id="cursor-readout">18.38°N 77.58°E</span></p>
+          </div>
+        </div>
+        <div class="mission-right">
+          <span class="link-status" id="link-status">◌ VERIFICANDO<small>NASA TREK + LOCAL</small></span>
+          <div class="header-actions"><a href="#layers" aria-label="Configurar capas">▱</a><button id="recenter" aria-label="Centrar en Jezero">⌖</button></div>
+        </div>
+      </header>
+      <div class="offline-banner" id="offline-banner" role="status" hidden>
+        <span>◈ Sin conexión a internet — usando teselas locales integradas y caché. El detalle fino solo existe en la zona de Jezero.</span>
+      </div>
+      <main class="workspace">
+        <section class="map-wrap" aria-label="Mapa interactivo de Marte"><div class="map-title">◎ JEZERO WEST DELTA</div><button class="map-reset" id="map-reset">CENTRAR ↗</button>
+          <div id="map"></div>
+          <div class="view-toggle" role="group" aria-label="Modo de visualización">
+            <button type="button" data-view="2d" aria-pressed="true">2D</button>
+            <button type="button" data-view="3d" aria-pressed="false">3D</button>
+          </div>
+          <div class="terrain3d" id="terrain3d" hidden>
+            <p class="terrain3d-status" id="terrain3d-status">Cargando relieve MOLA de NASA…</p>
+          </div>
+          <div class="terrain3d-controls" id="terrain3d-controls" hidden>
+            <button type="button" class="terrain3d-toggle" id="terrain3d-toggle" aria-expanded="true" aria-controls="terrain3d-controls-body">
+              <span>Vista 3D</span>
+              <i aria-hidden="true">▾</i>
+            </button>
+            <div class="terrain3d-controls-body" id="terrain3d-controls-body">
+              <label>Textura
+                <select id="terrain3d-texture">
+                  <option value="hirise">HiRISE Jezero (25 cm · mapa completo)</option>
+                  <option value="hrsc" selected>MOLA + HRSC</option>
+                  <option value="mola">MOLA relieve</option>
+                  <option value="themis-day">THEMIS IR día</option>
+                  <option value="themis-night">THEMIS IR noche</option>
+                  <option value="viking">Viking color</option>
+                  <option value="moc">MOC atlas</option>
+                </select>
+              </label>
+              <small class="terrain3d-tex-hint" id="terrain3d-hirise-hint" hidden></small>
+              <label>Exageración vertical <output id="terrain3d-exag-out">3×</output>
+                <input id="terrain3d-exag" type="range" min="1" max="8" step="0.5" value="3" />
+              </label>
+              <button type="button" class="tool terrain3d-sync-btn" id="terrain3d-sync-camera" aria-pressed="false" title="Fijar la perspectiva de la cámara con la orientación del rover">◎ Sincronizar cámara</button>
+              <small>Arrastra para girar · rueda para acercar · clic para leer cota</small>
+            </div>
+          </div>
+          <button type="button" class="tour-reopen" id="tour-reopen" aria-label="Iniciar tutorial interactivo" title="Tutorial interactivo">?</button>
+          <div class="map-legend" id="slope-legend" hidden>
+            <p>Pendiente</p>
+            <div class="ramp"></div>
+            <div class="ramp-labels"><span>0°</span><span>8°</span><span>15°</span><span>25°+</span></div>
+          </div>
+          <div class="scale-box">
+            <span id="scale-label">—</span>
+            <i id="scale-bar"></i>
+          </div>
+          <p class="map-note" id="map-note"></p>
+          <div class="rover-popup" id="rover-popup" hidden>
+            <div class="rover-popup-head">
+              <strong id="rover-pop-name">Perseverance</strong>
+              <span class="rover-heading" id="rover-pop-heading">N · 0°</span>
+              <button type="button" class="rover-popup-close" id="rover-popup-close" aria-label="Cerrar telemetría">×</button>
+            </div>
+            <div class="rover-alert" id="rover-pop-alert">Operación nominal</div>
+            <p class="sim-note">Simulación con parámetros estimados; no es telemetría real de NASA.</p>
+            <dl class="rover-telemetry">
+              <div><dt>Velocidad</dt><dd id="rover-pop-speed">— m/sol</dd></div>
+              <div><dt>Potencia</dt><dd id="rover-pop-power">— W</dd></div>
+              <div><dt>Energía acum.</dt><dd id="rover-pop-energy">— Wh</dd></div>
+              <div><dt>ETA</dt><dd id="rover-pop-eta">— soles</dd></div>
+              <div><dt>Pendiente / Cota</dt><dd id="rover-pop-slope">—°</dd></div>
+              <div><dt>Suelo (regolito)</dt><dd id="rover-pop-soil">—</dd></div>
+            </dl>
+            <div class="rover-progress-track" aria-hidden="true"><i id="rover-pop-progress"></i></div>
+          </div>
+        </section>
+
+        <div class="rover-bar" id="rover-bar" hidden>
+          <div class="rover-bar-controls">
+            <button type="button" class="tool go rover-play" id="rover-play">▶ Simular</button>
+            <button type="button" class="tool" id="rover-reset" aria-label="Reiniciar simulación">↺</button>
+            <select id="rover-model" aria-label="Modelo de rover">
+              <option value="perseverance">Perseverance</option>
+              <option value="curiosity">Curiosity · MSL Clásico</option>
+              <option value="curiosity-gold">Curiosity · Oro Kapton (ficticio)</option>
+              <option value="curiosity-night">Curiosity · Nocturno LED (ficticio)</option>
+            </select>
+            <select id="rover-speed" aria-label="Velocidad de simulación">
+              <option value="1">1×</option>
+              <option value="4" selected>4×</option>
+              <option value="12">12×</option>
+              <option value="30">30×</option>
+            </select>
+            <button type="button" class="tool" id="rover-follow" aria-pressed="false" title="Seguir al rover">⌖ Seguir</button>
+            <span class="sim-badge" role="note" title="Simulación con parámetros estimados; no es telemetría real de NASA.">⚙ SIMULACIÓN</span>
+          </div>
+          <div class="rover-bar-metrics">
+            <input id="rover-scrub" type="range" min="0" max="1000" value="0" aria-label="Progreso de la simulación" />
+            <div class="rover-bar-readout">
+              <span id="rover-bar-speed">— m/sol</span>
+              <span id="rover-bar-energy">— Wh</span>
+              <span id="rover-bar-eta">ETA —</span>
+              <span class="rover-bar-alert" id="rover-bar-alert">Nominal</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="overview" aria-label="Lectura del terreno seleccionado"><article><span>ELEVACIÓN SECTOR <i>↓</i></span><strong id="sector-elevation">— m</strong><small>⌁ DATUM MOLA</small></article><article><span>PENDIENTE LOCAL <i>⌁</i></span><strong id="sector-slope">—°</strong><small id="sector-risk">SELECCIONA UN PUNTO</small></article></div>
+        <aside class="panel" id="panel" aria-labelledby="panel-title" inert>
+          <div class="panel-header"><h2 id="panel-title">Puntos</h2><button type="button" class="panel-close" aria-label="Cerrar panel y volver al visor">×</button></div>
+          <div class="panel-content">
+          <section data-panel="points">
+      <div class="discovery"><label class="search"><span aria-hidden="true">⌕</span><div><input id="poi-search" type="search" placeholder="Explorar objetivos en Jezero" aria-label="Buscar puntos de interés"><small>Delta Front, Séítah, Belva Rim</small></div></label>
+      <div class="filters" role="group" aria-label="Filtrar puntos de interés"><button class="active" data-filter="all" aria-pressed="true">Todos</button><button data-filter="Delta" aria-pressed="false">≋ Delta aluvial</button><button data-filter="Muestra,Butte" aria-pressed="false">△ Afloramiento</button><button data-filter="Fondo,Aterrizaje" aria-pressed="false">◎ Fondo</button><button data-filter="Valle,Borde" aria-pressed="false">⌁ Valles y borde</button></div></div>
+            <div class="section-heading"><h2 id="points">Puntos Científicos en Jezero</h2><span id="poi-count"></span></div>
+            <p class="hint">Lugares científicos del cráter Jezero y del recorrido de Perseverance.</p>
+            <ul class="poi-list" id="poi-list"></ul>
+          </section>
+
+          <section data-panel="layers">
+        <section class="active-layers"><div class="section-heading"><h2>Capas activas</h2><a href="#layers">Configurar</a></div><div class="layer-toggles"><button id="toggle-hirise" aria-pressed="false">◈ HiRISE Jezero (25 cm)</button><button id="toggle-dem" aria-pressed="true">▱ Topografía DEM</button><button id="toggle-slope" class="risk" aria-pressed="false">△ Pendiente &gt;15°</button></div></section>
+            <h2 id="layers">Capas cartográficas</h2>
+            <p class="hint">Una base de imagen y las superposiciones que necesites, sincronizadas en 2D y 3D. Las teselas vienen de NASA Solar System Treks.</p>
+            <div class="base-list" id="base-list"></div>
+            <div class="check-list" id="overlay-list"></div>
+            <label class="slider">
+              Opacidad de superposiciones
+              <input id="overlay-opacity" type="range" min="0.25" max="1" step="0.05" value="0.9" />
+            </label>
+            <div class="nasa-source-box">
+              <strong>Fuente de datos (NASA Trek en línea / teselas locales)</strong>
+              <p class="hint" id="nasa-source-status">Verificando fuente local y conexión…</p>
+              <div class="export-row">
+                <button type="button" class="tool accent" id="btn-cache-extra">Descargar HiRISE z13 para offline</button>
+              </div>
+              <p class="hint" id="nasa-cache-progress" hidden></p>
+              <details class="sources-details" id="sources-details">
+                <summary>Qué es dato NASA y qué es cálculo propio</summary>
+                <div id="sources-body"></div>
+              </details>
+            </div>
+          </section>
+
+          <section data-panel="planner">
+            <h2 id="planner">Plan de ruta</h2>        <div class="toolbar" role="toolbar" aria-label="Navegación y planificación">
+          <button type="button" id="btn-mars" class="tool">Superficie de Marte</button>
+          <button type="button" id="btn-jezero" class="tool accent">Explorar Jezero</button>
+          <span class="sep"></span>
+          <button type="button" id="btn-set-a" class="tool" aria-pressed="false">Fijar origen A</button>
+          <button type="button" id="btn-set-b" class="tool" aria-pressed="false">Fijar destino B</button>
+          <button type="button" id="btn-example" class="tool">Ejemplo Neretva</button>
+          <button type="button" id="btn-clear" class="tool ghost">Limpiar</button>
+          <button type="button" id="btn-route" class="tool go">Generar ruta</button>
+        </div>
+
+            <div class="endpoints">
+              <div>
+                <span class="tag tag-a">A</span>
+                <p id="label-a">Sin origen</p>
+              </div>
+              <div>
+                <span class="tag tag-b">B</span>
+                <p id="label-b">Sin destino</p>
+              </div>
+            </div>
+            <label class="field">
+              Criterio
+              <select id="route-mode">
+                <option value="avoid">Menor coste, evitando pendientes</option>
+                <option value="direct">Línea directa de comparación</option>
+              </select>
+            </label>
+            <label class="field">
+              Umbral de pendiente elevada
+              <select id="slope-threshold">
+                <option value="10">10°</option>
+                <option value="15" selected>15°</option>
+                <option value="20">20°</option>
+                <option value="25">25°</option>
+              </select>
+            </label>
+            <p class="hint" id="route-status">Elige A y B sobre el mapa, o abre un punto de interés.</p>
+          </section>
+
+          <section data-panel="points planner">
+            <h2>Terreno</h2>
+            <div id="terrain-card" class="terrain-card empty">
+              Haz clic en el mapa para leer cota, pendiente y contexto.
+            </div>
+          </section>
+
+          <section data-panel="planner plans">
+            <h2>Distancia y perfil</h2>
+            <div class="stats" id="stats" hidden></div>
+            <div class="profile-wrap" id="profile-wrap" hidden>
+              <canvas id="profile" width="680" height="220"></canvas>
+              <p id="profile-hover">Pasa el cursor por el perfil.</p>
+            </div>
+            <div id="sectors"></div>
+          </section>
+
+          <section data-panel="plans">
+            <h2 id="plans">Exportar plan</h2>
+            <div class="export-row">
+              <button type="button" id="exp-geojson" class="tool" disabled>GeoJSON</button>
+              <button type="button" id="exp-gpx" class="tool" disabled>GPX</button>
+              <button type="button" id="exp-kml" class="tool" disabled>KML</button>
+              <button type="button" id="exp-png" class="tool" disabled>Perfil PNG</button>
+              <button type="button" id="exp-csv" class="tool" disabled>CSV del perfil</button>
+              <button type="button" id="exp-pdf" class="tool" disabled>Informe PDF</button>
+              <button type="button" id="exp-report" class="tool" disabled>Informe TXT</button>
+              <button type="button" id="exp-share" class="tool accent" disabled>Compartir enlace</button>
+            </div>
+            <div class="share-box" id="share-box" hidden>
+              <p class="hint" id="share-feedback"></p>
+              <input id="share-url" type="text" readonly aria-label="Enlace para compartir la ruta" />
+            </div>
+            <div class="nasa-source-box" id="panel-install-box">
+              <strong id="panel-install-title">ObsidIAn Navigator · Subir a GitHub e instalar</strong>
+              <p class="hint" id="panel-install-hint">Descarga el repositorio completo con fuente NASA local y publicación automática en GitHub Pages, o instala ObsidIAn Navigator directamente en tu equipo o móvil.</p>
+              <div class="export-row">
+                <a class="tool go" id="panel-download-zip" href="./ObsidIAn-github.zip" download="ObsidIAn-github.zip" hidden>⬇ Código GitHub (.zip)</a>
+                <button type="button" class="tool accent" id="panel-install-app" hidden>⬇ Instalar ObsidIAn Navigator</button>
+                <button type="button" class="tool" id="panel-copy-link">Compartir página</button>
+              </div>
+              <p class="hint" id="panel-share-feedback" hidden></p>
+            </div>
+            <p class="disclaimer" id="data-disclaimer">Planificación preliminar, no un producto de navegación. Imágenes y elevación base: datos de misiones de NASA servidos por NASA Solar System Treks (la capa CTX viene de Esri). El relieve fino de Jezero, los rovers y las rutas son cálculos de esta aplicación, no datos oficiales de NASA.</p>
+          </section>
+          </div>
+        </aside>
+      </main>
+    </div>
+    <div class="install-strip" id="install-strip" role="region" aria-label="Descargar o instalar ObsidIAn Navigator" hidden>
+      <img src="assets/logo.png" alt="ObsidIAn Navigator" width="28" height="28" />
+      <div class="install-strip-text">
+        <strong>ObsidIAn Navigator</strong>
+        <span>Instala la app en tu dispositivo o descarga el código listo para GitHub</span>
+      </div>
+      <button type="button" class="install-strip-close" id="strip-close-btn" aria-label="Ocultar aviso de descarga">×</button>
+      <div class="install-strip-actions">
+        <button type="button" class="tool go install-strip-btn" id="strip-install-btn">⬇ Descargar App</button>
+        <a class="tool accent install-strip-btn" id="strip-github-btn" href="./ObsidIAn-github.zip" download="ObsidIAn-github.zip">GitHub (.zip)</a>
+      </div>
+    </div>
+    <nav class="bottom-nav" aria-label="Navegación principal"><a href="#visor" class="active" aria-current="location"><span>◎</span>Visor</a><a href="#points"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Puntos</a><a href="#planner"><span>◉</span>Planificar</a><a href="#plans"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg></span>Planes</a></nav>
+    <div class="ios-modal" id="ios-install-modal" role="dialog" aria-modal="true" aria-labelledby="ios-install-title" hidden>
+      <div class="ios-modal-card">
+        <h3 id="ios-install-title">Descargar e instalar ObsidIAn Navigator</h3>
+        <p id="install-modal-guide">1. Pulsa el icono <strong>Instalar ObsidIAn Navigator</strong> en la barra de tu navegador o el menú <strong>Añadir a pantalla de inicio</strong>.<br>2. También puedes descargar el repositorio completo listo para GitHub y GitHub Pages.</p>
+        <div class="export-row">
+          <button type="button" class="tool go" id="modal-native-install" hidden>⬇ Instalar ahora</button>
+          <a class="tool accent" href="./ObsidIAn-github.zip" download="ObsidIAn-github.zip">⬇ Código GitHub (.zip)</a>
+          <button type="button" class="tool" id="ios-install-close">Cerrar</button>
+        </div>
+      </div>
+    </div>
+    <div class="tour-layer" id="tour-layer" hidden>
+      <div class="tour-spotlight" id="tour-spotlight" aria-hidden="true"></div>
+      <section class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+        <div class="tour-head">
+          <span class="tour-badge" id="tour-step-label">TUTORIAL · 1/7</span>
+          <button type="button" class="tour-close" id="tour-skip">Omitir</button>
+        </div>
+        <div class="tour-progress" aria-hidden="true"><i id="tour-progress-fill"></i></div>
+        <h3 id="tour-title"></h3>
+        <p id="tour-desc"></p>
+        <div class="tour-foot">
+          <div class="tour-dots" id="tour-dots" aria-hidden="true"></div>
+          <button type="button" class="tour-btn ghost" id="tour-prev" hidden>Atrás</button>
+          <button type="button" class="tour-btn" id="tour-next">Siguiente</button>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
